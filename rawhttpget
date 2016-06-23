@@ -1,0 +1,10 @@
+#! /bin/bash
+
+if [[ $# -lt 1 ]] ; then
+echo " pass URL in argument : ./rawhttpget [url] "
+exit 1
+fi
+ipaddress=$(ifconfig | grep addr:| head  -n1|cut -d':' -f2| cut -d' ' -f1)    
+
+python raw_socket.py $ipaddress $1
+

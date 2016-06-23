@@ -1,0 +1,27 @@
+README
+
+Run with sudo
+
+$ ./rawhttpget [url]
+
+Approach
+
+0. Bash script rawhttpget is used to parse the source ip of interface eth0 using ifconfig command and passed on to the raw_socket.py along with the URL passed from arguments
+1. Sending raw socket is created using SOCK_RAW/IPPROTO_RAW
+2. Receiving raw socket is created using SOCK_RAW/IPPROTO_TCP
+3. For HTTP to send GET request, a TCP connection has to be established. A SYN request is sent to the server using the handshake function which calls the packet_send() class to create TCP and IP header and calculate checksum.
+4. The response packet SYN/ACK from server is receive by the receive socket and an ack is sent back to the server.When the response is received, the header is unpacked to get the syn,ack,fin,ash,seq number and ack number. In the ack sent back to the server, SYN=0, ack number= seq number received+1.
+5. Now the client can send the HTTP GET request to the server. ACK and PSH flag are set to 1.
+6. The recv_page function receives the data from the server, checks for duplicate packets and drops it,if any. And if not duplicate, sends the ack back to server with ack= seq number recived+ length of data received. All the fragments received are collected in a dictionary http_data with key value pair of seq number and data.Also to check for lost packets, the client checks for inorder sequence number.If an out of order sequence number is sent, the client wont send ack. 
+7. Once the FIN response is sent from server, the client sends back a FIN response and the connection is closed.FIN response will have FIN flag set to 1 and ack number= eq_num received +length of data +1.
+8. To write the received data to a file, first the fragments received are sorted and written to a file. The HTTP headers are removed. The URL is parsed and if the URL has the file name, the data is written to a file with that name. If no file name is specified, the data is written to a file called index.html.
+
+Implemented:
+
+TCP:checksum, 3 way handshake,connection tear down, cwnd win,seq and ack number,MSS feild,timeout function,receiving out of order packets,discarding duplicate packets. IP: header length and total length, checksum,protocol identifier, version number. To get the IP address of host,we have used bash script.
+
+recevive socket used : SOCK_RAW/IPPROTO_TCP
+Challenges:
+
+1. Sending correct seq and ack number to the server.
+2. Downloading 50MB file
